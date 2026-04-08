@@ -5,31 +5,49 @@ def call(Map config = [:]) {
 
         stages {
 
-            stage('Log Repo Info') {
-                steps {
-                    echo "Repository: ${env.JOB_NAME}"
-                    echo "Branch: ${env.BRANCH_NAME}"
-                }
-            }
-
-            stage('Detect PR') {
+            stage('Identify Build') {
                 steps {
                     script {
                         if (env.CHANGE_ID) {
-                            echo "🔁 PR Detected: ${env.CHANGE_ID}"
+                            echo "🔁 PR Build: ${env.CHANGE_ID}"
                             echo "Source: ${env.CHANGE_BRANCH}"
                             echo "Target: ${env.CHANGE_TARGET}"
                         } else {
-                            echo "🚫 Not a PR build"
+                            echo "🚀 Branch Build: ${env.BRANCH_NAME}"
                         }
                     }
                 }
             }
 
-            stage('Custom Step') {
+            stage('Checkout') {
                 steps {
-                    echo "Running shared pipeline logic..."
+                    checkout scm
                 }
+            }
+
+            stage('Build') {
+                steps {
+                    bat 'echo Running centralized build logic...'
+                }
+            }
+
+            stage('Optional Config') {
+                steps {
+                    script {
+                        if (config.appName) {
+                            echo "App Name: ${config.appName}"
+                        }
+                    }
+                }
+            }
+        }
+
+        post {
+            success {
+                echo "✅ Build successful"
+            }
+            failure {
+                echo "❌ Build failed"
             }
         }
     }
